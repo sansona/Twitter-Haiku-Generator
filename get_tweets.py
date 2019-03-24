@@ -11,7 +11,7 @@ CONSUMER_SECRET = ''
 api = twitter.Api(CONSUMER_KEY, CONSUMER_SECRET,
                   APP_KEY, APP_SECRET)
 
-statuses = api.GetUserTimeline(screen_name='', count=200)
+statuses = api.GetUserTimeline(screen_name='', count=25)
 tweets = [status.text for status in statuses]
 tweets = [t[:-23] for t in tweets]  # strip auto-included URL from tweet
 

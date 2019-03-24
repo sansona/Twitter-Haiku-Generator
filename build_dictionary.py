@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import json
 import string
+import re
 from nltk.corpus import cmudict
 
 cmudict = cmudict.dict()
@@ -11,9 +12,8 @@ cmudict = cmudict.dict()
 def load_tweets(fname):
     # loads tweet timeline data, strips all unnecessary punctuation
     with open(fname) as f:
-        # (TODO): implement more effective method of stripping punctuation
-        tweets = f.read().translate(
-            str.maketrans('', '', string.punctuation))
+        tweets = f.read()
+        tweets = re.sub(r'[^\w\s]', ' ', tweets)  # strips unicode punctuation
         tweets = set(tweets.split())
         return tweets
 
@@ -21,7 +21,7 @@ def load_tweets(fname):
 
 
 def find_cmu_missing(tweet_words):
-    # return set of words in tweet.txt missing from cmudict
+    # return set of words in tweet.txt absent from cmudict
     missing_words = set()
     for word in tweet_words:
         word = word.lower()
@@ -37,13 +37,13 @@ def find_cmu_missing(tweet_words):
 
 def filter_missing(raw_missing_set):
     '''
-    allows user to select appropriate words in missing_words to ensure all in
-    set are real words
+    allows user to filter out words to be omitted from final dictionary. Used 
+    to remove any garbage, misspelled words, or general nonsense
     '''
     filtered_set = set()
     print('Enter n to remove word from set')
     for word in raw_missing_set:
-        keep_status = input('%s\n' % word)
+        keep_status = input('\n%s\n' % word)
         if keep_status != 'n':
             filtered_set.add(word)
 
@@ -71,28 +71,48 @@ def make_missing_dict(set_missing_words):
                 print('Not valid input')
                 continue
         syllables[word] = int(num_syllables)
-    print(syllables)
     print('Number of words in missing_words.txt: %s' % len(syllables))
 
-    # saves missing words
     f = open('missing_dict.json', 'w')
     f.write(json.dumps(syllables))
     f.close()
-    print('\nMissing words saved to missing_dict.jsonn')
+    print('Saved to missing_dict.json')
+
+
+# ------------------------------------------------------------------------------
+
+def return_syllable_count(_string):
+    with open('missing_dict.json', 'r') as f:
+        missing_dict = json.load(f)
+
+    words = re.sub(r'[^\w\s]', ' ', _string)
+    words = words.lower().split()
+    syllable_count = 0
+    for word in words:
+        if word in missing_dict:
+            syllable_count += missing_dict[word]
+        else:
+            # iterate through first pronunciation of word ([0])
+            for sounds in cmudict[word][0]:
+                for sound in sounds:
+                    if sound[-1].isdigit():
+                        # if vowel, count as one syllable
+                        syllable_count += 1
+    print(syllable_count)
+    return syllable_count
 
 
 # ------------------------------------------------------------------------------
 
 
 def main():
-    # load tweets
+    '''
     tweets = load_tweets('tweets.txt')
-    # find missing from cmu
     missing = find_cmu_missing(tweets)
-    # make missing dict
     filtered = filter_missing(missing)
-    # make_missing_dict(filtered)
-
+    make_missing_dict(filtered)
+    '''
+    pass
 # ------------------------------------------------------------------------------
 
 
