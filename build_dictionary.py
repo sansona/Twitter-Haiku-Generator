@@ -4,27 +4,36 @@ import string
 import re
 from nltk.corpus import cmudict
 
+# -----------------------------------------------------------------------------
+# Collection of functions for setting up cmudict & syllable counting functions
+# for determining syllable count of all words in word collection
+# -----------------------------------------------------------------------------
+
+
 cmudict = cmudict.dict()
 
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
-def load_tweets(fname):
+def load_tweets(fname, return_set=True):
     # loads tweet timeline data, strips all unnecessary punctuation
     with open(fname) as f:
-        tweets = f.read()
+        tweets = f.read().upper()
         tweets = re.sub(r'[^\w\s]', ' ', tweets)  # strips unicode punctuation
-        tweets = set(tweets.split())
+        if return_set:
+            tweets = set(tweets.split())
+        else:
+            tweets = tweets.split()
         return tweets
 
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 def find_cmu_missing(tweet_words):
     # return set of words in tweet.txt absent from cmudict
     missing_words = set()
     for word in tweet_words:
-        word = word.lower()
+        word = word.upper()
         if word not in cmudict:
             missing_words.add(word)
     print('Number unique words in tweets: %s' % len(tweet_words))
@@ -32,7 +41,7 @@ def find_cmu_missing(tweet_words):
 
     return missing_words
 
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 def filter_missing(raw_missing_set):
@@ -41,19 +50,33 @@ def filter_missing(raw_missing_set):
     to remove any garbage, misspelled words, or general nonsense
     '''
     filtered_set = set()
+    removed_words = []
     print('Enter n to remove word from set')
     for word in raw_missing_set:
         keep_status = input('\n%s\n' % word)
         if keep_status != 'n':
             filtered_set.add(word)
-
+        else:
+            removed_words.append(word)
     print('Words filtered from set: %s' %
           (len(raw_missing_set)-len(filtered_set)))
 
-    return filtered_set
+    return filtered_set, removed_words
 
 
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+
+def extract_removed_words(removed_words):
+    # creates new txt without the words deemed to be unuseful in filter_missing
+    raw_tweets = load_tweets('tweets.txt', return_set=False)
+    for word in raw_tweets:
+        if word in removed_words:
+            raw_tweets.remove(word)
+
+    with open('final_tweets.txt', 'w') as f:
+        for tweet in raw_tweets:
+            f.write('%s\n' % tweet)
+# -----------------------------------------------------------------------------
 
 
 def make_missing_dict(set_missing_words):
@@ -78,42 +101,22 @@ def make_missing_dict(set_missing_words):
     f.close()
     print('Saved to missing_dict.json')
 
-
-# ------------------------------------------------------------------------------
-
-def return_syllable_count(_string):
-    with open('missing_dict.json', 'r') as f:
-        missing_dict = json.load(f)
-
-    words = re.sub(r'[^\w\s]', ' ', _string)
-    words = words.lower().split()
-    syllable_count = 0
-    for word in words:
-        if word in missing_dict:
-            syllable_count += missing_dict[word]
-        else:
-            # iterate through first pronunciation of word ([0])
-            for sounds in cmudict[word][0]:
-                for sound in sounds:
-                    if sound[-1].isdigit():
-                        # if vowel, count as one syllable
-                        syllable_count += 1
-    print(syllable_count)
-    return syllable_count
-
-
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 
 def main():
     '''
+    load raw tweet data, find all words in tweet data not in tweet data and
+    manually assign syllable counts
+    '''
     tweets = load_tweets('tweets.txt')
     missing = find_cmu_missing(tweets)
-    filtered = filter_missing(missing)
-    make_missing_dict(filtered)
-    '''
-    pass
-# ------------------------------------------------------------------------------
+    filtered, removed = filter_missing(missing)
+
+    extract_removed_words(removed)  # makes new txt without unwanted words
+    # make_missing_dict(filtered)
+
+# -----------------------------------------------------------------------------
 
 
 if __name__ == '__main__':
