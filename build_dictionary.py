@@ -18,7 +18,7 @@ cmudict = cmudict.dict()
 def load_tweets(fname, return_set=True):
     # loads tweet timeline data, strips all unnecessary punctuation
     with open(fname) as f:
-        tweets = f.read().upper()
+        tweets = f.read().lower()
         tweets = re.sub(r'[^\w\s]', ' ', tweets)  # strips unicode punctuation
         if return_set:
             tweets = set(tweets.split())
@@ -33,8 +33,8 @@ def find_cmu_missing(tweet_words):
     # return set of words in tweet.txt absent from cmudict
     missing_words = set()
     for word in tweet_words:
-        word = word.upper()
-        if word not in cmudict:
+        word = word.lower()
+        if word not in cmudict and not word.isdigit():
             missing_words.add(word)
     print('Number unique words in tweets: %s' % len(tweet_words))
     print('Number missing words from CMUdict: %s' % len(missing_words))
@@ -114,7 +114,7 @@ def main():
     filtered, removed = filter_missing(missing)
 
     extract_removed_words(removed)  # makes new txt without unwanted words
-    # make_missing_dict(filtered)
+    make_missing_dict(filtered)
 
 # -----------------------------------------------------------------------------
 
