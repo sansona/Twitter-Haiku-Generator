@@ -11,6 +11,9 @@ cmudict = cmudict.dict()
 
 
 def return_syllable_count(_string):
+    if type(_string) == list:
+        _string = ' '.join(_string)
+
     with open('missing_dict.json', 'r') as f:
         missing_dict = json.load(f)
 
@@ -66,26 +69,77 @@ def select_seed(k1_chain, max_syl=4):
 # -----------------------------------------------------------------------------
 
 
-def choose_second_word(seed, k1_chain, max_syl=5):
+def seed_second_word(seed, k1_chain, max_syl=5):
     '''
     chooses second word in haiku to start k=2 markov chain seeding
     '''
     seed_syl = return_syllable_count(seed)
     next_words = k1_chain.get(seed)
 
-    syl_count = seed_syl
     valid_words = []
     for word in next_words:
-        print(word)
         syl = return_syllable_count(word)
         if seed_syl + syl <= max_syl:
             valid_words.append(word)
-    print(valid_words)
+
+    return random.choice(valid_words)
+
+# -----------------------------------------------------------------------------
+
+
+def choose_next_word(line, k_chain, curr_syl, max_syl=5):
+    if type(line) == str:
+        key = line
+    else:
+        key = line[-2] + ' ' + line[-1]
+
+    next_words = k_chain.get(key)
+    valid_words = []
+    for word in next_words:
+        syl = return_syllable_count(word)
+        if curr_syl + syl <= max_syl:
+            valid_words.append(word)
+
+    try:
+        return random.choice(valid_words)
+    except IndexError:
+        # if no valid matches
+        legal_syl = False
+        while not legal_syl:
+            next_words = random.choice(list(k_chain))
+            valid_words = []
+            for word in next_words:
+                syl = return_syllable_count(word)
+                if curr_syl + syl == max_syl:
+                    valid_words.append(word)
+                    legal_syl = True
+                else:
+                    continue
+            return random.choice(valid_words)
+# -----------------------------------------------------------------------------
+
+
+def write_haiku(k1, k2, line_length=[5, 7, 5]):
+    seed = select_seed(k1)
+    second = seed_second_word(seed, k1)
+    first_line = [seed, second]
+    n_syl = return_syllable_count(first_line)
+    while n_syl < line_length[0]:
+        next_word = choose_next_word(first_line, k2, n_syl)
+        first_line.append(next_word)
+        n_syl += return_syllable_count(next_word)
+    print(first_line)
 
 
 # -----------------------------------------------------------------------------
 tweets = load_tweets('final_tweets.txt', return_set=False)
 k1 = make_markov_chain(tweets, 1)
-seed = select_seed(k1)
-print(seed)
-choose_second_word(seed, k1)
+k2 = make_markov_chain(tweets, 2)
+for i in range(50):
+    # next step: figure out how to fix these indexerrors
+    try:
+        write_haiku(k1, k2)
+    except IndexError:
+        print('Index error')
+    except KeyError:
+        print('Key error')
