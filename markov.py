@@ -38,17 +38,18 @@ def return_syllable_count(_string):
 def make_markov_chain(tweets, k):
     stop_count = len(tweets) - k
     dict_k = defaultdict(list)
+
     for i, word in enumerate(tweets):
         if k == 1:
             if i < stop_count:
                 next_word = tweets[i+k]
                 dict_k[word].append(next_word)
-
         elif k == 2:
             if i < stop_count:
                 phrase = word + ' ' + tweets[i+1]
                 next_word = tweets[i+k]
                 dict_k[phrase].append(next_word)
+
     return dict_k
 
 # -----------------------------------------------------------------------------
@@ -69,29 +70,16 @@ def select_seed(k1_chain, max_syl=4):
 # -----------------------------------------------------------------------------
 
 
-def seed_second_word(seed, k1_chain, max_syl=5):
+def choose_next_word(seed, k_chain, curr_syl, max_syl=5):
     '''
-    chooses second word in haiku to start k=2 markov chain seeding
+    takes in seed, traverses k_chain to return next word.
+    If no valid next word, randomly select new seed and return traversal 
+    results from that seed
     '''
-    seed_syl = return_syllable_count(seed)
-    next_words = k1_chain.get(seed)
-
-    valid_words = []
-    for word in next_words:
-        syl = return_syllable_count(word)
-        if seed_syl + syl <= max_syl:
-            valid_words.append(word)
-
-    return random.choice(valid_words)
-
-# -----------------------------------------------------------------------------
-
-
-def choose_next_word(line, k_chain, curr_syl, max_syl=5):
     if type(line) == str:
-        key = line
+        key = seed
     else:
-        key = line[-2] + ' ' + line[-1]
+        key = seed[-2] + ' ' + seed[-1]
 
     next_words = k_chain.get(key)
     valid_words = []
@@ -100,34 +88,38 @@ def choose_next_word(line, k_chain, curr_syl, max_syl=5):
         if curr_syl + syl <= max_syl:
             valid_words.append(word)
 
-    try:
+    if len(valid_words) > 0:
         return random.choice(valid_words)
-    except IndexError:
-        # if no valid matches
+    else:
+        # if no valid matches for oriinal seed
         legal_syl = False
         while not legal_syl:
-            next_words = random.choice(list(k_chain))
+            # randomly choose seed return next in chain.
+            # NOTE: does not replace original two words, only uses new words
+            # as seed
+            new_seeds = random.choice(list(k_chain))
+            next_words = k_chain.get(new_seeds)
             valid_words = []
             for word in next_words:
                 syl = return_syllable_count(word)
                 if curr_syl + syl == max_syl:
                     valid_words.append(word)
                     legal_syl = True
-                else:
-                    continue
-            return random.choice(valid_words)
+
+        return random.choice(valid_words)
 # -----------------------------------------------------------------------------
 
 
 def write_haiku(k1, k2, line_length=[5, 7, 5]):
     seed = select_seed(k1)
-    second = seed_second_word(seed, k1)
+    second = choose_next_word(seed, k1, return_syllable_count(seed))
     first_line = [seed, second]
     n_syl = return_syllable_count(first_line)
     while n_syl < line_length[0]:
         next_word = choose_next_word(first_line, k2, n_syl)
         first_line.append(next_word)
         n_syl += return_syllable_count(next_word)
+
     print(first_line)
 
 
@@ -135,11 +127,12 @@ def write_haiku(k1, k2, line_length=[5, 7, 5]):
 tweets = load_tweets('final_tweets.txt', return_set=False)
 k1 = make_markov_chain(tweets, 1)
 k2 = make_markov_chain(tweets, 2)
-for i in range(50):
-    # next step: figure out how to fix these indexerrors
+
+key_cnt = 0
+for i in range(500):
     try:
         write_haiku(k1, k2)
-    except IndexError:
-        print('Index error')
     except KeyError:
+        key_cnt += 1
         print('Key error')
+print(key_cnt)
