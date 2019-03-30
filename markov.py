@@ -73,13 +73,16 @@ def select_seed(k1_chain, max_syl=4):
 def choose_next_word(seed, k_chain, curr_syl, max_syl=5):
     '''
     takes in seed, traverses k_chain to return next word.
-    If no valid next word, randomly select new seed and return traversal 
+    If no valid next word, randomly select new seed and return traversal
     results from that seed
     '''
-    if type(line) == str:
+    if type(seed) == str:
         key = seed
     else:
-        key = seed[-2] + ' ' + seed[-1]
+        if len(seed) == 1:
+            key = str(seed)
+        else:
+            key = seed[-2] + ' ' + seed[-1]
 
     next_words = k_chain.get(key)
     valid_words = []
@@ -120,7 +123,16 @@ def write_haiku(k1, k2, line_length=[5, 7, 5]):
         first_line.append(next_word)
         n_syl += return_syllable_count(next_word)
 
-    print(first_line)
+    # This is a mess, working on cleaning this up
+    second_seed = [first_line[-2], first_line[-1]]
+    second_line_0 = choose_next_word(second_seed, k2, 0)
+    second_line = [second_line_0]
+    n2_syl = return_syllable_count(second_line)
+    while n2_syl < line_length[1]:
+        next_word = choose_next_word(second_line, k2, n_syl)
+        second_line.append(next_word)
+        n_syl += return_syllable_count(next_word)
+    print(second_line)
 
 
 # -----------------------------------------------------------------------------
