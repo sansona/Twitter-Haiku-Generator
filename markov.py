@@ -110,29 +110,56 @@ def choose_next_word(seed, k_chain, curr_syl, max_syl=5):
                     legal_syl = True
 
         return random.choice(valid_words)
+
 # -----------------------------------------------------------------------------
 
 
-def write_haiku(k1, k2, line_length=[5, 7, 5]):
+def generate_first_line(k1, k2, line_length=5):
+    # utilize random seed to generate first line
     seed = select_seed(k1)
     second = choose_next_word(seed, k1, return_syllable_count(seed))
     first_line = [seed, second]
     n_syl = return_syllable_count(first_line)
-    while n_syl < line_length[0]:
+
+    while n_syl < line_length:
         next_word = choose_next_word(first_line, k2, n_syl)
         first_line.append(next_word)
         n_syl += return_syllable_count(next_word)
 
-    # This is a mess, working on cleaning this up
-    second_seed = [first_line[-2], first_line[-1]]
-    second_line_0 = choose_next_word(second_seed, k2, 0)
-    second_line = [second_line_0]
-    n2_syl = return_syllable_count(second_line)
-    while n2_syl < line_length[1]:
-        next_word = choose_next_word(second_line, k2, n_syl)
+    return first_line
+
+
+# -----------------------------------------------------------------------------
+
+def generate_line(seed, k1, k2, line_length=5):
+    # utilize last line of previous line to seed current line
+    first = choose_next_word(seed, k1, 0, line_length)
+    n_syl = return_syllable_count(first)
+    second = choose_next_word(first, k1, n_syl, line_length)
+    n_syl += return_syllable_count(second)
+    second_line = [first, second]
+
+    while n_syl < line_length:
+        next_word = choose_next_word(second_line, k2, n_syl, line_length)
         second_line.append(next_word)
         n_syl += return_syllable_count(next_word)
-    print(second_line)
+
+    return second_line
+
+
+# -----------------------------------------------------------------------------
+
+def generate_haiku(k1, k2, line_length=[5, 7, 5]):
+    first_line = generate_first_line(k1, k2, line_length[0])
+
+    seed2 = first_line[-1]
+    second_line = generate_line(seed2, k1, k2, line_length[1])
+
+    seed3 = second_line[-1]
+    third_line = generate_line(seed3, k1, k2, line_length[2])
+
+    lines = (first_line, second_line, third_line)
+    return [[(' '.join(line))] for line in lines]
 
 
 # -----------------------------------------------------------------------------
@@ -140,11 +167,6 @@ tweets = load_tweets('final_tweets.txt', return_set=False)
 k1 = make_markov_chain(tweets, 1)
 k2 = make_markov_chain(tweets, 2)
 
-key_cnt = 0
 for i in range(500):
-    try:
-        write_haiku(k1, k2)
-    except KeyError:
-        key_cnt += 1
-        print('Key error')
-print(key_cnt)
+    haiku = generate_haiku(k1, k2)
+    print(haiku)
