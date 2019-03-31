@@ -86,10 +86,14 @@ def choose_next_word(seed, k_chain, curr_syl, max_syl=5):
 
     next_words = k_chain.get(key)
     valid_words = []
-    for word in next_words:
-        syl = return_syllable_count(word)
-        if curr_syl + syl <= max_syl:
-            valid_words.append(word)
+    try:
+        # if word not connected to anything in chain
+        for word in next_words:
+            syl = return_syllable_count(word)
+            if curr_syl + syl <= max_syl:
+                valid_words.append(word)
+    except TypeError:
+        pass
 
     if len(valid_words) > 0:
         return random.choice(valid_words)
@@ -149,7 +153,7 @@ def generate_line(seed, k1, k2, line_length=5):
 
 # -----------------------------------------------------------------------------
 
-def generate_haiku(k1, k2, line_length=[5, 7, 5]):
+def write_haiku(k1, k2, line_length=[5, 7, 5]):
     first_line = generate_first_line(k1, k2, line_length[0])
 
     seed2 = first_line[-1]
@@ -163,10 +167,13 @@ def generate_haiku(k1, k2, line_length=[5, 7, 5]):
 
 
 # -----------------------------------------------------------------------------
-tweets = load_tweets('final_tweets.txt', return_set=False)
-k1 = make_markov_chain(tweets, 1)
-k2 = make_markov_chain(tweets, 2)
 
-for i in range(500):
-    haiku = generate_haiku(k1, k2)
-    print(haiku)
+def generate_models():
+    tweets = load_tweets('final_tweets.txt', return_set=False)
+    k1 = make_markov_chain(tweets, 1)
+    k2 = make_markov_chain(tweets, 2)
+    haiku = write_haiku(k1, k2)
+    return haiku
+
+
+# -----------------------------------------------------------------------------

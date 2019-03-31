@@ -71,11 +71,17 @@ def extract_removed_words(removed_words):
     raw_tweets = load_tweets('tweets.txt', return_set=False)
     for word in raw_tweets:
         if word in removed_words:
+            # raw_tweets.remove(word)
+            raw_tweets = [x for x in raw_tweets if x != word]
+        elif any(char.isdigit() for char in word):
+            raw_tweets.remove(word)
+        elif len(word) > 10:
             raw_tweets.remove(word)
 
     with open('final_tweets.txt', 'w') as f:
         for tweet in raw_tweets:
             f.write('%s\n' % tweet)
+
 # -----------------------------------------------------------------------------
 
 
@@ -104,7 +110,7 @@ def make_missing_dict(set_missing_words):
 # -----------------------------------------------------------------------------
 
 
-def main():
+def build_new_dict():
     '''
     load raw tweet data, find all words in tweet data not in tweet data and
     manually assign syllable counts
@@ -117,7 +123,3 @@ def main():
     make_missing_dict(filtered)
 
 # -----------------------------------------------------------------------------
-
-
-if __name__ == '__main__':
-    main()
