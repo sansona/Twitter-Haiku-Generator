@@ -8,6 +8,12 @@ import os
 import argparse
 
 # -----------------------------------------------------------------------------
+# Usage: ./main.py [username] [-n]
+# if first time running for particular user, [-n] to create new dict/model
+#
+# before use, input user credentials in get_tweets.py
+# -----------------------------------------------------------------------------
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -15,17 +21,17 @@ if __name__ == '__main__':
         ' via. Markov chains')
     parser.add_argument(
         'user', help='User data to generate model from', type=str)
-    parser.add_argument('-n', '--new_dict', help='Build new dictionary?',
+    parser.add_argument('-n', '--new_user', help='Create new dict for new user',
                         action='store_true')
     args = parser.parse_args()
 
-    if args.new_dict:
+    if args.new_user:
         if not os.path.exists(args.user):
             os.makedirs(args.user)
         os.chdir(args.user)
 
         print('Scraping and generating dictionary...\n')
-        scrape_tweets(args.user, 200)
+        scrape_timeline(args.user, 50)
         build_new_dict()
     else:
         os.chdir(args.user)
@@ -34,6 +40,12 @@ if __name__ == '__main__':
     while not good_haiku:
         haiku = generate_models()
         post = input('Post?\n%s\n' % haiku)
-        if post == 'y':
+        if post.lower() == 'y':
             post_tweet(haiku, user=args.user)
-            good_haiku = True
+            cont = input('Continue?\n\n')
+            if cont.lower() == 'y':
+                continue
+            else:
+                good_haiku = True
+
+# -----------------------------------------------------------------------------

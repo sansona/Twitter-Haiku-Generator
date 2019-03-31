@@ -3,6 +3,9 @@ import twitter
 # NOTE: there's python-twitter & twitter. pip install python-twitter for
 # correct package
 
+# -----------------------------------------------------------------------------
+# ----------------------FILL THIS OUT BEFORE RUNNING---------------------------
+
 APP_KEY = ''
 APP_SECRET = ''
 CONSUMER_KEY = ''
@@ -14,8 +17,15 @@ api = twitter.Api(CONSUMER_KEY, CONSUMER_SECRET,
 # -----------------------------------------------------------------------------
 
 
-def scrape_tweets(user, COUNT=200):
-    statuses = api.GetUserTimeline(screen_name=user, count=COUNT)
+def scrape_timeline(user, n=200):
+    '''
+    scrape most recent n tweets from user timeline, writes to txt file
+    .txt still has to be processed before use
+
+    NOTE: Twitter limits scraping 200 tweets/request. To get around
+    this limit, can send multiple spaced out requests
+    '''
+    statuses = api.GetUserTimeline(screen_name=user, count=n)
     tweets = [status.text for status in statuses]
     tweets = [t[:-23] for t in tweets]  # strip auto-included URL from tweet
 
@@ -27,7 +37,7 @@ def scrape_tweets(user, COUNT=200):
 
 
 def post_tweet(haiku, user):
-
+    # type(haiku) == list
     haiku_str = 'from %s:\n\n' % user
     for line in haiku:
         haiku_str += str(line[0])

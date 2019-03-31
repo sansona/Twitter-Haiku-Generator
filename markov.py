@@ -5,12 +5,15 @@ from collections import defaultdict
 from nltk.corpus import cmudict
 from build_dictionary import load_tweets
 
+# -----------------------------------------------------------------------------
+
 cmudict = cmudict.dict()
 
 # -----------------------------------------------------------------------------
 
 
 def return_syllable_count(_string):
+    # utilize cmu_dict & missing_dict.json to count syllables in string/list
     if type(_string) == list:
         _string = ' '.join(_string)
 
@@ -36,6 +39,10 @@ def return_syllable_count(_string):
 
 
 def make_markov_chain(tweets, k):
+    '''
+    parse through tweets and create chains w/ k strings. Returns dict w/ 
+    format string: list of values
+    '''
     stop_count = len(tweets) - k
     dict_k = defaultdict(list)
 
@@ -57,7 +64,7 @@ def make_markov_chain(tweets, k):
 
 def select_seed(k1_chain, max_syl=4):
     '''
-    takes in chain k=1 generated from make_markov_chain(), seeds haiku
+    takes in chain k=1 generated from make_markov_chain(), randomly seeds haiku
     '''
     invalid_syl = True
     while invalid_syl:
@@ -70,9 +77,9 @@ def select_seed(k1_chain, max_syl=4):
 # -----------------------------------------------------------------------------
 
 
-def choose_next_word(seed, k_chain, curr_syl, max_syl=5):
+def select_next_word(seed, k_chain, curr_syl, max_syl=5):
     '''
-    takes in seed, traverses k_chain to return next word.
+    takes in first_word, traverses k_chain to return next word.
     If no valid next word, randomly select new seed and return traversal
     results from that seed
     '''
@@ -101,9 +108,8 @@ def choose_next_word(seed, k_chain, curr_syl, max_syl=5):
         # if no valid matches for oriinal seed
         legal_syl = False
         while not legal_syl:
-            # randomly choose seed return next in chain.
-            # NOTE: does not replace original two words, only uses new words
-            # as seed
+            # randomly choose seed and return next in chain.
+            # doesn't incorporate new seed into haiku, uses original seed
             new_seeds = random.choice(list(k_chain))
             next_words = k_chain.get(new_seeds)
             valid_words = []
@@ -119,41 +125,41 @@ def choose_next_word(seed, k_chain, curr_syl, max_syl=5):
 
 
 def generate_first_line(k1, k2, line_length=5):
-    # utilize random seed to generate first line
     seed = select_seed(k1)
-    second = choose_next_word(seed, k1, return_syllable_count(seed))
+    second = select_next_word(seed, k1, return_syllable_count(seed))
     first_line = [seed, second]
     n_syl = return_syllable_count(first_line)
 
     while n_syl < line_length:
-        next_word = choose_next_word(first_line, k2, n_syl)
+        next_word = select_next_word(first_line, k2, n_syl)
         first_line.append(next_word)
         n_syl += return_syllable_count(next_word)
 
     return first_line
 
-
 # -----------------------------------------------------------------------------
+
 
 def generate_line(seed, k1, k2, line_length=5):
     # utilize last line of previous line to seed current line
-    first = choose_next_word(seed, k1, 0, line_length)
+    first = select_next_word(seed, k1, 0, line_length)
     n_syl = return_syllable_count(first)
-    second = choose_next_word(first, k1, n_syl, line_length)
+    second = select_next_word(first, k1, n_syl, line_length)
     n_syl += return_syllable_count(second)
     second_line = [first, second]
 
     while n_syl < line_length:
-        next_word = choose_next_word(second_line, k2, n_syl, line_length)
+        next_word = select_next_word(second_line, k2, n_syl, line_length)
         second_line.append(next_word)
         n_syl += return_syllable_count(next_word)
 
     return second_line
 
-
 # -----------------------------------------------------------------------------
 
+
 def write_haiku(k1, k2, line_length=[5, 7, 5]):
+    # first line randomly seeded, following lines seeded by ending of previous
     first_line = generate_first_line(k1, k2, line_length[0])
 
     seed2 = first_line[-1]
@@ -165,15 +171,17 @@ def write_haiku(k1, k2, line_length=[5, 7, 5]):
     lines = (first_line, second_line, third_line)
     return [[(' '.join(line))] for line in lines]
 
-
 # -----------------------------------------------------------------------------
 
+
 def generate_models():
+    '''
+    pipeline for generating haiku from processed .txt 
+    '''
     tweets = load_tweets('final_tweets.txt', return_set=False)
     k1 = make_markov_chain(tweets, 1)
     k2 = make_markov_chain(tweets, 2)
     haiku = write_haiku(k1, k2)
     return haiku
-
 
 # -----------------------------------------------------------------------------
