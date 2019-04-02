@@ -13,8 +13,10 @@ cmudict = cmudict.dict()
 
 
 def return_syllable_count(_string):
-    # utilize cmu_dict & missing_dict.json to count syllables in string/list
-    if type(_string) == list:
+    '''
+    utilize cmu_dict & missing_dict.json to count syllables in string/list
+    '''
+    if isinstance(_string, list):
         _string = ' '.join(_string)
 
     with open('missing_dict.json', 'r') as f:
@@ -40,7 +42,7 @@ def return_syllable_count(_string):
 
 def make_markov_chain(tweets, k):
     '''
-    parse through tweets and create chains w/ k strings. Returns dict w/ 
+    parse through tweets and create chains w/ k strings. Returns dict w/
     format string: list of values
     '''
     stop_count = len(tweets) - k
@@ -83,7 +85,7 @@ def select_next_word(seed, k_chain, curr_syl, max_syl=5):
     If no valid next word, randomly select new seed and return traversal
     results from that seed
     '''
-    if type(seed) == str:
+    if isinstance(seed, str):
         key = seed
     else:
         if len(seed) == 1:
@@ -125,6 +127,10 @@ def select_next_word(seed, k_chain, curr_syl, max_syl=5):
 
 
 def generate_first_line(k1, k2, line_length=5):
+    '''
+    use random seed to write first line of haiku. Separate from other lines 
+    since randomly seeded
+    '''
     seed = select_seed(k1)
     second = select_next_word(seed, k1, return_syllable_count(seed))
     first_line = [seed, second]
@@ -141,7 +147,9 @@ def generate_first_line(k1, k2, line_length=5):
 
 
 def generate_line(seed, k1, k2, line_length=5):
-    # utilize last line of previous line to seed current line
+    '''
+    utilize last line of previous line to seed current line
+    '''
     first = select_next_word(seed, k1, 0, line_length)
     n_syl = return_syllable_count(first)
     second = select_next_word(first, k1, n_syl, line_length)
@@ -159,7 +167,9 @@ def generate_line(seed, k1, k2, line_length=5):
 
 
 def write_haiku(k1, k2, line_length=[5, 7, 5]):
-    # first line randomly seeded, following lines seeded by ending of previous
+    '''
+    first line randomly seeded, following lines seeded by ending of previous
+    '''
     first_line = generate_first_line(k1, k2, line_length[0])
 
     seed2 = first_line[-1]
@@ -176,7 +186,7 @@ def write_haiku(k1, k2, line_length=[5, 7, 5]):
 
 def generate_models():
     '''
-    pipeline for generating haiku from processed .txt 
+    pipeline for generating haiku from processed .txt
     '''
     tweets = load_tweets('final_tweets.txt', return_set=False)
     k1 = make_markov_chain(tweets, 1)

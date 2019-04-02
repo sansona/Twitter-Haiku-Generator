@@ -17,7 +17,7 @@ api = twitter.Api(CONSUMER_KEY, CONSUMER_SECRET,
 # -----------------------------------------------------------------------------
 
 
-def scrape_timeline(user, n=200):
+def scrape_timeline(user, n=30):
     '''
     scrape most recent n tweets from user timeline, writes to txt file
     .txt still has to be processed before use
@@ -37,7 +37,9 @@ def scrape_timeline(user, n=200):
 
 
 def post_tweet(haiku, user):
-    # type(haiku) == list
+    '''
+    formats haiku from list to haiku strings, posts to Twitter
+    '''
     haiku_str = 'from %s:\n\n' % user
     for line in haiku:
         haiku_str += str(line[0])

@@ -1,21 +1,21 @@
 #!/usr/bin/python3
-from get_tweets import *
-from build_dictionary import *
-from markov import *
-
-import sys
 import os
 import argparse
 
-# -----------------------------------------------------------------------------
-# Usage: ./main.py [username] [-n]
-# if first time running for particular user, [-n] to create new dict/model
-#
-# before use, input user credentials in get_tweets.py
+from get_tweets import scrape_timeline, post_tweet
+from build_dictionary import build_new_dict
+from markov import generate_models
+
 # -----------------------------------------------------------------------------
 
 
-if __name__ == '__main__':
+def main():
+    '''
+    Usage: ./main.py [username] [-n]
+    if first time running for particular user, [-n] to create new dict/model
+
+    before use, input user credentials in get_tweets.py
+    '''
     parser = argparse.ArgumentParser(
         description='Generates haikus from user timeline data'
         ' via. Markov chains')
@@ -30,7 +30,6 @@ if __name__ == '__main__':
             os.makedirs(args.user)
         os.chdir(args.user)
 
-        print('Scraping and generating dictionary...\n')
         scrape_timeline(args.user, 50)
         build_new_dict()
     else:
@@ -48,4 +47,8 @@ if __name__ == '__main__':
             else:
                 good_haiku = True
 
-# -----------------------------------------------------------------------------
+
+if __name__ == '__main__':
+    main()
+
+    # -----------------------------------------------------------------------------

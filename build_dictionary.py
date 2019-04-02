@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 import json
-import string
 import re
 from nltk.corpus import cmudict
 
@@ -16,8 +15,8 @@ cmudict = cmudict.dict()
 
 def load_tweets(fname, return_set=True):
     '''
-    loads tweet timeline data, formats data (strip punctuation & forces lower 
-    case. Returns list of tweets or set of words 
+    loads tweet timeline data, formats data (strip punctuation & forces lower
+    case. Returns list of tweets or set of words
     '''
     with open(fname) as f:
         tweets = f.read().lower()
@@ -33,9 +32,9 @@ def load_tweets(fname, return_set=True):
 
 def find_cmu_missing(tweet_words):
     '''
-    return set of words in tweet.txt absent from cmudict. Set of words will 
-    likely be comprised of slang, misspellings, or anything not unusually in 
-    a dictionary 
+    return set of words in tweet.txt absent from cmudict. Set of words will
+    likely be comprised of slang, misspellings, or anything not unusually in
+    a dictionary
     '''
     missing_words = set()
     for word in tweet_words:
@@ -52,7 +51,7 @@ def find_cmu_missing(tweet_words):
 
 def filter_missing(raw_missing_set):
     '''
-    allows user to filter out words to be omitted from final dictionary. Used 
+    allows user to filter out words to be omitted from final dictionary. Used
     to remove any garbage, misspelled words, or general nonsense
     '''
     filtered_set = set()
@@ -74,7 +73,7 @@ def filter_missing(raw_missing_set):
 
 def extract_removed_words(removed_words):
     '''
-    creates final .txt with words that were flagged in filter_missing and 
+    creates final .txt with words that were flagged in filter_missing and
     words deemed inappropriate for haikus (too long or containing digits)
     '''
     raw_tweets = load_tweets('tweets.txt', return_set=False)
@@ -96,7 +95,7 @@ def extract_removed_words(removed_words):
 
 def make_missing_dict(set_missing_words):
     '''
-    utilizes words deemed to be usable from filter_missing and creates 
+    utilizes words deemed to be usable from filter_missing and creates
     .json dict with syllable count as value via. user input
     '''
     syllables = {}
